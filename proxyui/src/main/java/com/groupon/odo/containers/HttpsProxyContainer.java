@@ -16,8 +16,11 @@
 package com.groupon.odo.containers;
 
 
+import com.groupon.odo.proxylib.ClientService;
 import com.groupon.odo.proxylib.Constants;
 import com.groupon.odo.proxylib.Utils;
+import com.groupon.odo.proxylib.models.Client;
+import com.groupon.transparentproxy.TransparentProxy;
 import org.apache.catalina.Context;
 import org.apache.catalina.connector.Connector;
 import org.apache.coyote.http11.Http11NioProtocol;
@@ -30,13 +33,11 @@ import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletCon
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.groupon.transparentproxy.TransparentProxy;
-
+import javax.servlet.ServletContext;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import javax.servlet.ServletContext;
 
 @Configuration
 public class HttpsProxyContainer extends GenericProxyContainer {
@@ -64,7 +65,7 @@ public class HttpsProxyContainer extends GenericProxyContainer {
         // this ensures that it gets unpacked from the jar/war
         final File keyStore = com.groupon.odo.proxylib.Utils.copyResourceToLocalFile("tomcat.ks", "tomcat.ks");
 
-        // Add HTTPS customization to connector
+
         factory.addConnectorCustomizers(new TomcatConnectorCustomizer() {
             @Override
             public void customize(Connector connector) {
@@ -87,6 +88,47 @@ public class HttpsProxyContainer extends GenericProxyContainer {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+
+        Connector[] connectors = createClientConnectors(keyStore.getAbsolutePath());
+        if(connectors != null && connectors.length > 0) {
+            factory.addAdditionalTomcatConnectors(connectors);
+        }
         return factory;
     }
+
+    private Connector[] createClientConnectors(String keyStorePath) {
+        ArrayList<Connector> connectors = new ArrayList<Connector>();
+
+        try {
+            ArrayList<Client> clients = ClientService.getInstance().findAllClients();
+
+            for (Client c : clients) {
+                if (!c.getIsActive()) {
+                    continue;
+                }
+                int port = c.getHttpsPort();
+                if(port <= 0) {
+                    continue;
+                }
+
+                Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
+                Http11NioProtocol protocol = (Http11NioProtocol) connector.getProtocolHandler();
+
+                connector.setPort(port);
+                connector.setSecure(true);
+                protocol.setSSLEnabled(true);
+                connector.setScheme("https");
+                connector.setAttribute("keystorePass", "changeit");
+                connector.setAttribute("keystoreFile", keyStorePath);
+                connector.setAttribute("clientAuth", "false");
+                connector.setAttribute("sslProtocol", "TLS");
+                connector.setAttribute("sslEnabled", true);
+                connectors.add(connector);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return connectors.toArray(new Connector[0]);
+    }
+
 }

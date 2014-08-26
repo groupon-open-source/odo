@@ -15,9 +15,13 @@
 */
 package com.groupon.odo.containers;
 
+import com.groupon.odo.proxylib.ClientService;
 import com.groupon.odo.proxylib.Constants;
 import com.groupon.odo.proxylib.Utils;
+import com.groupon.odo.proxylib.models.Client;
 import org.apache.catalina.Context;
+import org.apache.catalina.connector.Connector;
+import org.apache.coyote.http11.Http11NioProtocol;
 import org.apache.tomcat.JarScanner;
 import org.apache.tomcat.JarScannerCallback;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerFactory;
@@ -26,10 +30,10 @@ import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletCon
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.servlet.ServletContext;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import javax.servlet.ServletContext;
 
 @Configuration
 public class HttpProxyContainer extends GenericProxyContainer {
@@ -51,6 +55,41 @@ public class HttpProxyContainer extends GenericProxyContainer {
                 context.setJarScanner(jarScanner);
             }
         });
+
+        Connector[] connectors = createClientConnectors();
+            if(connectors != null && connectors.length > 0) {
+                factory.addAdditionalTomcatConnectors(connectors);
+            }
         return factory;
+    }
+
+    private Connector[] createClientConnectors() {
+        ArrayList<Connector> connectors = new ArrayList<Connector>();
+
+        try {
+            ArrayList<Client> clients = ClientService.getInstance().findAllClients();
+
+            for (Client c : clients) {
+                if (!c.getIsActive()) {
+                    continue;
+                }
+                int port = c.getHttpPort();
+                if(port <= 0) {
+                    continue;
+                }
+
+                Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
+                Http11NioProtocol protocol = (Http11NioProtocol) connector.getProtocolHandler();
+
+                connector.setScheme("http");
+                connector.setSecure(true);
+                connector.setPort(port);
+                protocol.setSSLEnabled(false);
+                connectors.add(connector);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return connectors.toArray(new Connector[0]);
     }
 }

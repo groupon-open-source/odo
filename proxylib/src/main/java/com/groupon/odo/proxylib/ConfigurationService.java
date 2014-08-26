@@ -30,6 +30,11 @@ public class ConfigurationService {
     private static SQLService sqlService = null;
     private static ConfigurationService _instance = null;
 
+    private int defaultHttpPort = 8082;
+    private int defaultHttpsPort = 8012;
+    private int defaultForwardingPort = 9090;
+    private Boolean restartPending = false;
+
     private ConfigurationService() {
         Constants.VERSION = getClass().getPackage().getImplementationVersion();
         logger.info("Version: {}", Constants.VERSION);
@@ -183,4 +188,32 @@ public class ConfigurationService {
             }
         }
     }
+
+    public int getDefaultHttpPort() {
+        return defaultHttpPort;
+    }
+
+    public void setDefaultHttpPort(int defaultHttpPort) {
+        this.defaultHttpPort = defaultHttpPort;
+    }
+
+    public int getDefaultHttpsPort() {
+        return defaultHttpsPort;
+    }
+
+    public void setDefaultHttpsPort(int defaultHttpsPort) {
+        this.defaultHttpsPort = defaultHttpsPort;
+    }
+
+    public int getDefaultForwardingPort() {
+        return defaultForwardingPort;
+    }
+
+    public void setDefaultForwardingPort(int defaultForwardingPort) {
+        this.defaultForwardingPort = defaultForwardingPort;
+    }
+
+    public Boolean getRestartPending() { return restartPending; }
+
+    public void setRestartPending(Boolean pending) { restartPending = pending; }
 }

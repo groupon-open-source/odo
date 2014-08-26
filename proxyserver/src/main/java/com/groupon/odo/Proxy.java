@@ -431,12 +431,26 @@ public class Proxy extends HttpServlet {
      * @param httpServletRequest
      * @param history
      */
-    private void processClientId(HttpServletRequest httpServletRequest, History history) {
+    private void processClientId(HttpServletRequest httpServletRequest, History history) throws Exception {
+        ConfigurationService config = ConfigurationService.getInstance();
         // get the client id from the request header if applicable.. otherwise set to default
         // also set the client uuid in the history object
         if (httpServletRequest.getHeader(Constants.PROFILE_CLIENT_HEADER_NAME) != null &&
-                !httpServletRequest.getHeader(Constants.PROFILE_CLIENT_HEADER_NAME).equals("")) {
+                ! httpServletRequest.getHeader(Constants.PROFILE_CLIENT_HEADER_NAME).equals("")) {
             history.setClientUUID(httpServletRequest.getHeader(Constants.PROFILE_CLIENT_HEADER_NAME));
+        } else if (httpServletRequest.getLocalPort() != config.getDefaultHttpPort() &&
+                httpServletRequest.getLocalPort() != config.getDefaultHttpsPort() &&
+                httpServletRequest.getLocalPort() != config.getDefaultForwardingPort()) {
+            Client client = null;
+            if (httpServletRequest.getRequestURL().toString().startsWith("https://")) {
+                client = ClientService.getInstance().findClientByHttpsPort(httpServletRequest.getLocalPort());
+            }
+            else {
+                client = ClientService.getInstance().findClientByHttpPort(httpServletRequest.getLocalPort());
+            }
+            if(client != null) {
+                history.setClientUUID(client.getUUID());
+            }
         } else {
             history.setClientUUID(Constants.PROFILE_CLIENT_DEFAULT_ID);
         }

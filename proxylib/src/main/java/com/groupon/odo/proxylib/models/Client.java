@@ -30,6 +30,8 @@ public class Client {
     private String friendlyName = "";
     private String lastAccessedFormatted = null;
     private int activeServerGroup;
+    private int httpPort;
+    private int httpsPort;
 
     public Client() {
 
@@ -105,5 +107,21 @@ public class Client {
 
     public void setActiveServerGroup(int serverGroupId) {
         this.activeServerGroup = serverGroupId;
+    }
+
+    public int getHttpPort() {
+        return httpPort;
+    }
+
+    public void setHttpPort(int httpPort) {
+        this.httpPort = httpPort;
+    }
+
+    public int getHttpsPort() {
+        return httpsPort;
+    }
+
+    public void setHttpsPort(int httpsPort) {
+        this.httpsPort = httpsPort;
     }
 }

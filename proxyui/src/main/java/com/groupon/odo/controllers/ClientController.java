@@ -105,7 +105,9 @@ public class ClientController {
     @ResponseBody
     HashMap<String, Object> addClient(Model model,
                                       @PathVariable("profileIdentifier") String profileIdentifier,
-                                      @RequestParam(required = false) String friendlyName) throws Exception {
+                                      @RequestParam(required = false) String friendlyName,
+                                      @RequestParam(required=false) Integer httpPort,
+                                      @RequestParam(required=false) Integer httpsPort) throws Exception {
         Integer profileId = ControllerUtils.convertProfileIdentifier(profileIdentifier);
         
         // make sure client with this name does not already exist
@@ -118,11 +120,18 @@ public class ClientController {
         // set friendly name if it was specified
         if (friendlyName != null) {
             clientService.setFriendlyName(profileId, client.getUUID(), friendlyName);
-            client.setFriendlyName(friendlyName);
+        }
+
+        if (httpPort != null) {
+            clientService.setHttpPort(profileId, client.getUUID(), httpPort);
+        }
+
+            if (httpsPort != null) {
+            clientService.setHttpsPort(profileId, client.getUUID(), httpsPort);
         }
 
         HashMap<String, Object> valueHash = new HashMap<String, Object>();
-        valueHash.put("client", client);
+        valueHash.put("client", clientService.findClient(client.getUUID(), profileId));
         return valueHash;
     }
 
@@ -145,6 +154,8 @@ public class ClientController {
                                          @PathVariable("clientUUID") String clientUUID,
                                          @RequestParam(required = false) Boolean active,
                                          @RequestParam(required = false) String friendlyName,
+                                         @RequestParam(required=false) Integer httpPort,
+                                         @RequestParam(required=false) Integer httpsPort,
                                          @RequestParam(required = false) Boolean reset) throws Exception {
         Integer profileId = ControllerUtils.convertProfileIdentifier(profileIdentifier);
 
@@ -159,6 +170,14 @@ public class ClientController {
 
         if (reset != null && reset) {
             clientService.reset(profileId, clientUUID);
+        }
+
+        if (httpPort != null) {
+            clientService.setHttpPort(profileId, clientUUID, httpPort);
+        }
+
+            if (httpsPort != null) {
+            clientService.setHttpsPort(profileId, clientUUID, httpsPort);
         }
 
         HashMap<String, Object> valueHash = new HashMap<String, Object>();

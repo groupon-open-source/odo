@@ -206,6 +206,8 @@ public class ClientService {
         client.setProfile(ProfileService.getInstance().findProfile(result.getInt(Constants.GENERIC_PROFILE_ID)));
         client.setIsActive(result.getBoolean(Constants.CLIENT_IS_ACTIVE));
         client.setActiveServerGroup(result.getInt(Constants.CLIENT_ACTIVESERVERGROUP));
+        client.setHttpPort(result.getInt(Constants.CLIENT_HTTP_PORT));
+        client.setHttpsPort(result.getInt(Constants.CLIENT_HTTPS_PORT));
         return client;
     }
 
@@ -637,4 +639,125 @@ public class ClientService {
         return (String) sqlService.getFromTable(Constants.CLIENT_PROFILE_ID, Constants.GENERIC_ID, id, Constants.DB_TABLE_CLIENT);
     }
 
+    public ArrayList<Client> findAllClients() throws Exception {
+        ArrayList<Client> clients = new ArrayList<Client>();
+
+        Connection sqlConnection = null;
+        PreparedStatement query = null;
+        ResultSet results = null;
+
+        try{
+            sqlConnection = sqlService.getConnection();
+            query = sqlConnection.prepareStatement(
+                    "SELECT * FROM " + Constants.DB_TABLE_CLIENT);
+            results = query.executeQuery();
+            while(results.next()){
+                clients.add(this.getClientFromResultSet(results));
+            }
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            try {  if(results != null) results.close(); } catch (Exception e) {}
+            try {  if(query != null) query.close(); } catch (Exception e) {}
+        }
+        return clients;
+    }
+
+    public void setHttpPort(Integer profileId, String clientUUID, Integer httpPort) {
+        Connection sqlConnection = null;
+        PreparedStatement statement = null;
+        try {
+            sqlConnection = sqlService.getConnection();
+            statement = sqlConnection.prepareStatement(
+                    "UPDATE " + Constants.DB_TABLE_CLIENT +
+                            " SET " + Constants.CLIENT_HTTP_PORT + "= ?" +
+                            " WHERE " + Constants.GENERIC_CLIENT_UUID + "= ? " +
+                            " AND " + Constants.GENERIC_PROFILE_ID + "= ?");
+            statement.setInt(1, httpPort);
+            statement.setString(2, clientUUID);
+            statement.setInt(3, profileId);
+            statement.executeUpdate();
+        } catch (Exception e) {
+            // ok to swallow this.. just means there wasn't any
+        } finally {
+            try {  if(statement != null) statement.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void setHttpsPort(Integer profileId, String clientUUID, Integer httpsPort) {
+        Connection sqlConnection = null;
+        PreparedStatement statement = null;
+        try {
+            sqlConnection = sqlService.getConnection();
+            statement = sqlConnection.prepareStatement(
+                    "UPDATE " + Constants.DB_TABLE_CLIENT +
+                            " SET " + Constants.CLIENT_HTTPS_PORT + "= ?" +
+                            " WHERE " + Constants.GENERIC_CLIENT_UUID + "= ? " +
+                            " AND " + Constants.GENERIC_PROFILE_ID + "= ?");
+            statement.setInt(1, httpsPort);
+            statement.setString(2, clientUUID);
+            statement.setInt(3, profileId);
+            statement.executeUpdate();
+        } catch (Exception e) {
+            // ok to swallow this.. just means there wasn't any
+        } finally {
+            try {  if(statement != null) statement.close(); } catch (Exception e) {}
+        }
+    }
+
+    public Client findClientByHttpPort(int port) throws Exception {
+        Client client = null;
+
+        Connection sqlConnection = null;
+        PreparedStatement statement = null;
+        ResultSet results = null;
+
+        try {
+            String queryString = "SELECT * FROM " + Constants.DB_TABLE_CLIENT +
+                    " WHERE " + Constants.CLIENT_HTTP_PORT + " = ?";
+            sqlConnection = sqlService.getConnection();
+            statement = sqlConnection.prepareStatement(queryString);
+            statement.setInt(1, port);
+
+            results = statement.executeQuery();
+            if (results.next()) {
+                client = this.getClientFromResultSet(results);
+            }
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            try {  if(results != null) results.close(); } catch (Exception e) {}
+            try {  if(statement != null) statement.close(); } catch (Exception e) {}
+        }
+
+        return client;
+    }
+
+    public Client findClientByHttpsPort(int port) throws Exception{
+        Client client = null;
+
+        Connection sqlConnection = null;
+        PreparedStatement statement = null;
+        ResultSet results = null;
+
+        try {
+            String queryString = "SELECT * FROM " + Constants.DB_TABLE_CLIENT +
+                    " WHERE " + Constants.CLIENT_HTTPS_PORT + " = ?";
+            sqlConnection = sqlService.getConnection();
+            statement = sqlConnection.prepareStatement(queryString);
+            statement.setInt(1, port);
+
+            results = statement.executeQuery();
+            if (results.next()) {
+                client = this.getClientFromResultSet(results);
+            }
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            try {  if(results != null) results.close(); } catch (Exception e) {}
+            try {  if(statement != null) statement.close(); } catch (Exception e) {}
+        }
+
+        return client;
+    }
 }

@@ -24,6 +24,7 @@
             </div>
         </div>
     </nav>
+    <div id="portChangeNotice" class="container-fluid" ><p style="color:#FF0000">Port changes require an application restart.</p></div>
 	<div id="clientContainer"">
         <table id="clientlist"></table>
         <div id="clientnavGrid"></div>
@@ -100,7 +101,7 @@ clientList
 	cellEdit : true,
 	datatype : "json",
 	colNames : [ 'ID', 'UUID',
-			'Friendly Name', 'Active', 'Last Accessed' ],
+			'Friendly Name', 'Active', 'HTTP Port', 'HTTPS Port', 'Last Accessed' ],
 	colModel : [ {
 		name : 'id',
 		index : 'id',
@@ -116,18 +117,30 @@ clientList
 	}, {
 		name : 'friendlyName',
 		index : 'friendlyName',
-		width : 100,
+		width : 180,
 		editable : true
 	}, {
 		name: 'isActive',
 		path: 'isActive',
-		width: 18,
+		width: 50,
 		editable: true,
 		align: 'center',
 		edittype: 'checkbox',
 		formatter: enabledFormatter, 
 		formatoptions: {disabled : false}
 	}, {
+        name: 'httpPort',
+        path: 'httpPort',
+        editable: true,
+        align: 'right',
+        width: 60
+    }, {
+        name: 'httpsPort',
+        path: 'httpsPort',
+        editable: true,
+        align: 'right',
+        width: 60
+    }, {
 		name: 'lastAccessedFormatted',
 		path: 'lastAccessedFormatted',
 		editable: false,
@@ -143,12 +156,9 @@ clientList
 	},
 	afterEditCell : function(rowid, cellname, value, iRow, iCol) {
 		var uuid = clientList.getCell(rowid, 'uuid');
-		console.log(rowid);
-		if (cellname == "friendlyName") {
-			clientList.setGridParam({
-				cellurl : '<c:url value="/api/profile/${profile_id}/clients/"/>' + uuid
-			});
-		}
+		clientList.setGridParam({
+            cellurl : '<c:url value="/api/profile/${profile_id}/clients/"/>' + uuid
+        });
 	},
 	afterSaveCell : function() {
 		clientList.trigger("reloadGrid");
@@ -187,8 +197,7 @@ clientList.jqGrid('navGrid', '#clientnavGrid', {
 	}, 
 	onclickSubmit: function(rp_ge,postdata) {
 		var uuid = jQuery('#clientlist').getCell(postdata, 'uuid');
-	    rp_ge.url = '<c:url value="/api/profile/${profile_id}/clients/"/>' +
-	    			uuid;
+	    rp_ge.url = '<c:url value="/api/profile/${profile_id}/clients/"/>' + uuid;
 	},
 	reloadAfterSubmit: true
 });
